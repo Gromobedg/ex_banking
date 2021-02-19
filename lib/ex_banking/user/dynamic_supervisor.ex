@@ -9,8 +9,13 @@ defmodule ExBanking.User.DynamicSupervisor do
   end
 
   def create_user(user) do
-    {:ok, _} = start_child(%{id: Consumer, start: {Consumer, :start_link, [user]}})
-    start_child(%{id: Producer, start: {Producer, :start_link, [user]}})
+    if Registry.lookup(Users, user) == [] do
+      {:ok, _} =
+        start_child(%{id: Consumer, start: {Consumer, :start_link, [user]}})
+      start_child(%{id: Producer, start: {Producer, :start_link, [user]}})
+    else
+      {:error, :user_already_exists}
+    end
   end
 
   defp start_child(child_spec) do
