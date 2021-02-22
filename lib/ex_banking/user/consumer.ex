@@ -19,8 +19,8 @@ defmodule ExBanking.User.Consumer do
   def init(_args), do: {:consumer, :ok}
 
   def handle_events(events, _from, state) do
-    for {from, event_reply} <- events do
-      GenStage.reply(from, event_reply)
+    for {from, _event_reply} <- events do
+      GenStage.reply(from, {:ok, 0})
     end
 
     {:noreply, [], state}

@@ -19,9 +19,9 @@ defmodule ExBanking do
 
   @spec create_user(user :: String.t) :: :ok | banking_error
   def create_user(user) when is_binary(user) do
-    :world
+    ExBanking.User.DynamicSupervisor.create_user(user)
   end
-  def create_user(_user), do: :wrong_arguments
+  def create_user(_user), do: {:error, :wrong_arguments}
 
   @spec deposit(
     user :: String.t,
@@ -29,6 +29,7 @@ defmodule ExBanking do
     currency :: String.t
   ) :: {:ok, new_balance :: number} | banking_error
   def deposit(user, amount, currency) do
+    _params = [user: user, amount: amount, currency: currency]
     :world
   end
 
@@ -38,6 +39,7 @@ defmodule ExBanking do
     currency :: String.t
   ) :: {:ok, new_balance :: number} | banking_error
   def withdraw(user, amount, currency) do
+    _params = [user: user, amount: amount, currency: currency]
     :world
   end
 
@@ -46,7 +48,8 @@ defmodule ExBanking do
     currency :: String.t
   ) :: {:ok, balance :: number} | banking_error
   def get_balance(user, currency) do
-    :world
+    params = [user: user, currency: currency]
+    ExBanking.User.Producer.call(user, {:get_balance, params})
   end
 
   @spec send(
@@ -56,6 +59,10 @@ defmodule ExBanking do
     currency :: String.t
   ) :: send_success_resp | banking_error
   def send(from_user, to_user, amount, currency) do
+    _params = [
+      from_user: from_user, to_user: to_user, amount: amount,
+      currency: currency,
+    ]
     :world
   end
 end
