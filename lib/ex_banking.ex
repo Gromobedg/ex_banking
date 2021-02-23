@@ -1,4 +1,6 @@
 defmodule ExBanking do
+  alias ExBanking.User.Protocol.{Deposit, GetBalance, Send, Withdraw}
+
   @type banking_error :: {
     :error,
     :wrong_arguments                |
@@ -29,8 +31,8 @@ defmodule ExBanking do
     currency :: String.t
   ) :: {:ok, new_balance :: number} | banking_error
   def deposit(user, amount, currency) do
-    _params = [user: user, amount: amount, currency: currency]
-    :world
+    event = %Deposit{user: user, amount: amount, currency: currency}
+    ExBanking.User.Producer.call(user, event)
   end
 
   @spec withdraw(
@@ -39,8 +41,8 @@ defmodule ExBanking do
     currency :: String.t
   ) :: {:ok, new_balance :: number} | banking_error
   def withdraw(user, amount, currency) do
-    _params = [user: user, amount: amount, currency: currency]
-    :world
+    event = %Withdraw{user: user, amount: amount, currency: currency}
+    ExBanking.User.Producer.call(user, event)
   end
 
   @spec get_balance(
@@ -48,8 +50,8 @@ defmodule ExBanking do
     currency :: String.t
   ) :: {:ok, balance :: number} | banking_error
   def get_balance(user, currency) do
-    params = [user: user, currency: currency]
-    ExBanking.User.Producer.call(user, {:get_balance, params})
+    event = %GetBalance{user: user, currency: currency}
+    ExBanking.User.Producer.call(user, event)
   end
 
   @spec send(
@@ -59,10 +61,19 @@ defmodule ExBanking do
     currency :: String.t
   ) :: send_success_resp | banking_error
   def send(from_user, to_user, amount, currency) do
-    _params = [
-      from_user: from_user, to_user: to_user, amount: amount,
+    event = %Send{
+      from_user: from_user,
+      to_user: to_user,
+      amount: amount,
       currency: currency,
-    ]
-    :world
+    }
+    from_user
+    |> ExBanking.User.Producer.call(event)
+    |> override_error
   end
+
+  defp override_error({:error, :too_many_requests_to_user}) do
+    {:error, :too_many_requests_to_sender}
+  end
+  defp override_error(error), do: error
 end

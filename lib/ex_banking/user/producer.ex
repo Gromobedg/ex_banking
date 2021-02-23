@@ -1,15 +1,15 @@
 defmodule ExBanking.User.Producer do
   use GenStage
 
-  alias ExBanking.Utils
+  alias ExBanking.{Format, Validator}
 
   def start_link(user) do
-    GenStage.start_link(__MODULE__, 0, name: Utils.generate_registry_name(user))
+    GenStage.start_link(__MODULE__, 0, name: Format.registry_name(user))
   end
 
-  def call(user, {_event_type, params} = event) do
-    case Utils.validate_params(params) do
-      :valid -> GenStage.call(Utils.generate_registry_name(user), event)
+  def call(user, event) do
+    case Validator.validate_event(event) do
+      :valid -> GenStage.call(Format.registry_name(user), event)
       error -> error
     end
   end
